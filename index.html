@@ -7,17 +7,17 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg" />
     <link rel="apple-touch-icon" href="icons/icon-192.png" />
     <link rel="manifest" href="manifest.json" />
+    <link rel="preconnect" href="https://pokedex-backend-g1ql.onrender.com" />
+    <link rel="preconnect" href="https://raw.githubusercontent.com" />
     <title>Pokédex</title>
   </head>
   <body>
     <svg width="0" height="0" style="position: absolute" aria-hidden="true">
-      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
       <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></symbol>
       <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></symbol>
-      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13 7 4 4" /></symbol>
-      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></symbol>
       <symbol id="i-ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h6m6 0h6" /><circle cx="12" cy="12" r="3" /></symbol>
       <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M4 7h3c5 0 5 10 10 10h3M4 17h3c2 0 3-1.5 4-3.5M13 9.5c1-2 2-2.5 4-2.5h3M17 4l3 3-3 3M17 14l3 3-3 3" /></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
     </svg>
 
     <a class="skip" href="#main">Saltar a la Pokédex</a>
@@ -42,9 +42,9 @@
           <p>Busca un Pokémon por su nombre o por su número de la Pokédex Nacional.</p>
         </div>
         <div class="search-note">
-          <p>¿Falta alguno? Agrégalo a tu Pokédex, o edita y elimina los que ya tienes.</p>
-          <button class="btn green" id="new" type="button">
-            <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Nuevo Pokémon
+          <p>¿No sabes cuál buscar? Abre la ficha de un Pokémon al azar.</p>
+          <button class="btn dark" id="surprise" type="button">
+            <svg class="icon" aria-hidden="true"><use href="#i-shuffle" /></svg>¡Sorpréndeme!
           </button>
         </div>
       </section>
@@ -54,54 +54,12 @@
         <div class="chips" id="chips"></div>
       </fieldset>
 
-      <div class="toolbar">
-        <button class="btn blue" id="surprise" type="button">
-          <svg class="icon" aria-hidden="true"><use href="#i-shuffle" /></svg>¡Sorpréndeme!
-        </button>
-        <label class="sort">
-          Ordenar por
-          <select id="sort">
-            <option value="num-asc">Número inferior</option>
-            <option value="num-desc">Número superior</option>
-            <option value="az">A-Z</option>
-            <option value="za">Z-A</option>
-            <option value="azar" hidden>Al azar</option>
-          </select>
-        </label>
-      </div>
-
+      <p class="status" id="status" role="status"></p>
       <ul class="grid" id="grid" aria-live="polite"></ul>
       <div class="more"><button class="btn blue" id="more" type="button" hidden>Cargar más Pokémon</button></div>
     </main>
 
     <dialog id="detail" class="sheet"></dialog>
-
-    <dialog id="editor" class="sheet">
-      <form id="form" novalidate>
-        <header class="sheet-head">
-          <h2 id="form-title">Nuevo Pokémon</h2>
-          <button class="close" type="button" data-close aria-label="Cerrar">
-            <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
-          </button>
-        </header>
-        <div class="fields">
-          <label class="wide">Nombre<input name="nombre" required maxlength="40" autocomplete="off" spellcheck="false" placeholder="Pikachu…" /></label>
-          <label>Número<input name="numero" type="number" required min="1" max="9999" inputmode="numeric" autocomplete="off" placeholder="25…" /></label>
-          <label>Tipo principal<select name="tipo1" required autocomplete="off"></select></label>
-          <label>Segundo tipo<select name="tipo2" autocomplete="off"></select></label>
-          <label class="wide">Imagen (URL)<input name="imagen" type="url" placeholder="https://ejemplo.com/pikachu.png…" autocomplete="off" spellcheck="false" /></label>
-          <label>Altura (m)<input name="altura" type="number" min="0" step="0.1" inputmode="decimal" autocomplete="off" placeholder="0.4…" /></label>
-          <label>Peso (kg)<input name="peso" type="number" min="0" step="0.1" inputmode="decimal" autocomplete="off" placeholder="6…" /></label>
-        </div>
-        <p class="form-error" id="form-error" role="alert"></p>
-        <footer class="sheet-foot">
-          <button class="btn ghost" type="button" data-close>Cancelar</button>
-          <button class="btn blue" type="submit" id="save">Guardar</button>
-        </footer>
-      </form>
-    </dialog>
-
-    <div class="toast" id="toast" role="status"></div>
 
     <script type="module" src="/src/main.js"></script>
     <script src="js/swregist.js" defer></script>

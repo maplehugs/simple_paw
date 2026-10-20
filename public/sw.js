@@ -1,5 +1,5 @@
 // Rutas relativas a sw.js: sirven igual en / (Express) y en /simple_paw/ (GitHub Pages)
-const CACHE = 'pokedex-v3';
+const CACHE = 'pokedex-v4';
 const ARCHIVOS = [
   './',
   'offline.html',

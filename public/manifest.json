@@ -1,7 +1,7 @@
 {
   "name": "Pokédex",
   "short_name": "Pokédex",
-  "description": "Pokédex con CRUD: crea, edita y elimina Pokémon",
+  "description": "Pokédex de los 151 Pokémon: búsqueda, tipos, estadísticas y evoluciones",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

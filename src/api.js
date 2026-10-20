@@ -1,72 +1,48 @@
-// Single place that talks to the data source.
-// With VITE_API_URL set (e.g. in .env.local) it hits the professor's REST backend;
-// without it, it uses a localStorage mock seeded from PokeAPI.
-// Pokémon shape: { id, numero, nombre, tipos: [string], imagen, altura, peso }
+// HTTP client for the course backend (read-only). Docs: https://pokedex-backend-g1ql.onrender.com/docs
+const BASE = import.meta.env.VITE_API_URL || 'https://pokedex-backend-g1ql.onrender.com'
 
-const BASE = import.meta.env.VITE_API_URL
-
-async function http(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
-  if (!res.ok) throw new Error(`El servidor respondió ${res.status}`)
-  return res.status === 204 ? null : res.json()
+export class HttpError extends Error {
+  constructor(status, message) {
+    super(message)
+    this.status = status
+  }
 }
 
-const rest = {
-  list: () => http('/pokemon'),
-  create: (data) => http('/pokemon', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id, data) => http(`/pokemon/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  remove: (id) => http(`/pokemon/${id}`, { method: 'DELETE' }),
-}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
-// --- mock -------------------------------------------------------------------
-
-const KEY = 'pokedex-mock'
-const ES = {
-  normal: 'normal', fire: 'fuego', water: 'agua', grass: 'planta', electric: 'eléctrico', ice: 'hielo',
-  fighting: 'lucha', poison: 'veneno', ground: 'tierra', flying: 'volador', psychic: 'psíquico', bug: 'bicho',
-  rock: 'roca', ghost: 'fantasma', dragon: 'dragón', dark: 'siniestro', steel: 'acero', fairy: 'hada',
-}
-
-const read = () => JSON.parse(localStorage.getItem(KEY))
-const write = (all) => localStorage.setItem(KEY, JSON.stringify(all))
-
-async function seed() {
-  const ids = Array.from({ length: 151 }, (_, i) => i + 1)
-  const all = await Promise.all(
-    ids.map(async (id) => {
-      const p = await (await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)).json()
-      return {
-        id: String(id),
-        numero: id,
-        nombre: p.name[0].toUpperCase() + p.name.slice(1),
-        tipos: p.types.map((t) => ES[t.type.name] ?? t.type.name),
-        imagen: p.sprites.other['official-artwork'].front_default,
-        altura: p.height / 10,
-        peso: p.weight / 10,
+// The free plan sleeps after ~15 min; the first request can take 30-50 s.
+// Network errors and timeouts are retried with backoff; HTTP errors are not.
+async function get(path, { retries = 3, timeout = 60000 } = {}) {
+  for (let intento = 0; ; intento++) {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeout)
+    try {
+      const res = await fetch(`${BASE}${path}`, { signal: ctrl.signal })
+      if (res.status === 404) return null
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new HttpError(res.status, body.message || `Error ${res.status}`)
       }
-    })
-  )
-  write(all)
-  return all
+      return await res.json()
+    } catch (e) {
+      if (e instanceof HttpError || intento >= retries) throw e
+      await sleep(2000 * 2 ** intento) // 2 s, 4 s, 8 s
+    } finally {
+      clearTimeout(timer)
+    }
+  }
 }
 
-const mock = {
-  list: async () => read() ?? seed(),
-  create: async (data) => {
-    const p = { ...data, id: crypto.randomUUID() }
-    write([...read(), p])
-    return p
+export const api = {
+  // -> { data: [{ id, name, genus, types, sprite, artwork }], meta: { total, limit, offset } }
+  list({ limit = 12, offset = 0, search, type } = {}) {
+    const params = new URLSearchParams({ limit, offset })
+    if (search) params.set('search', search)
+    if (type) params.set('type', type)
+    return get(`/api/pokemon?${params}`)
   },
-  update: async (id, data) => {
-    const p = { ...data, id }
-    write(read().map((x) => (x.id === id ? p : x)))
-    return p
-  },
-  remove: async (id) => write(read().filter((x) => x.id !== id)),
+  // -> detail object, or null when it does not exist
+  detail: (idOrName) => get(`/api/pokemon/${encodeURIComponent(idOrName)}`),
+  // -> { data: [{ name, pokemonCount }] }
+  types: () => get('/api/types'),
 }
-
-export const api = BASE ? rest : mock
-export const TIPOS = Object.values(ES)
