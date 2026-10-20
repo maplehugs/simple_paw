@@ -1,5 +1,5 @@
 // Rutas relativas a sw.js: sirven igual en / (Express) y en /simple_paw/ (GitHub Pages)
-const CACHE = 'pokedex-v2';
+const CACHE = 'pokedex-v3';
 const ARCHIVOS = [
   './',
   'offline.html',
@@ -33,7 +33,8 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then(guardada =>
+    // ignoreSearch en navegación: /simple_paw/?q=pika usa la misma página guardada que /simple_paw/
+    caches.match(event.request, { ignoreSearch: event.request.mode === 'navigate' }).then(guardada =>
       guardada || fetch(event.request).then(respuesta => {
         if (respuesta.ok || respuesta.type === 'opaque') {
           const copia = respuesta.clone();
