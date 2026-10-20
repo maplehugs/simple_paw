@@ -1,5 +1,5 @@
 // Rutas relativas a sw.js: sirven igual en / (Express) y en /simple_paw/ (GitHub Pages)
-const CACHE = 'pokedex-v4';
+const CACHE = 'pokedex-v5';
 const ARCHIVOS = [
   './',
   'offline.html',
@@ -9,10 +9,18 @@ const ARCHIVOS = [
   'icons/icon-512.png'
 ];
 
+// Primera página de la Pokédex y los tipos, para que abra sin conexión desde la primera visita
+const API = 'https://pokedex-backend-g1ql.onrender.com';
+const API_INICIAL = [`${API}/api/pokemon?limit=12&offset=0`, `${API}/api/types`];
+
 // 1. install: guarda los archivos estáticos en la caché
+// (si el backend está dormido o falla, el SW se instala igual; esos datos se guardan al usarlos)
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ARCHIVOS))
+    caches.open(CACHE).then(cache => Promise.all([
+      cache.addAll(ARCHIVOS),
+      cache.addAll(API_INICIAL).catch(() => {})
+    ]))
   );
   self.skipWaiting();
 });

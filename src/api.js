@@ -25,7 +25,8 @@ async function get(path, { retries = 3, timeout = 60000 } = {}) {
       }
       return await res.json()
     } catch (e) {
-      if (e instanceof HttpError || intento >= retries) throw e
+      // without network there is nothing to wait for: fail now and let the UI say so
+      if (e instanceof HttpError || intento >= retries || !navigator.onLine) throw e
       await sleep(2000 * 2 ** intento) // 2 s, 4 s, 8 s
     } finally {
       clearTimeout(timer)
