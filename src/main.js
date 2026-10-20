@@ -33,9 +33,10 @@ const clase = (t) => (TIPOS[t] ?? 'otro').toLowerCase().normalize('NFD').replace
 const tipo = (t) => `<span class="type t-${clase(t)}">${esc(TIPOS[t] ?? t)}</span>`
 const medida = (n, unidad) => `${(n / 10).toLocaleString('es')} ${unidad}` // API gives decimetres / hectograms
 const icon = (id) => `<svg class="icon" aria-hidden="true"><use href="#${id}" /></svg>`
-const art = (src) =>
+// the first row is above the fold: load it right away with high priority (LCP)
+const art = (src, primeras = false) =>
   src
-    ? `<img src="${esc(src)}" alt="" loading="lazy" width="475" height="475" />`
+    ? `<img src="${esc(src)}" alt="" ${primeras ? 'fetchpriority="high"' : 'loading="lazy"'} width="475" height="475" />`
     : `<svg class="empty-art" aria-hidden="true"><use href="#i-ball" /></svg>`
 
 // "despertando" message when the backend is cold-starting
@@ -50,10 +51,10 @@ const DESPERTANDO = 'Despertando el servidor… la primera carga puede tardar ha
 
 // --- list -------------------------------------------------------------------
 
-const card = (p) => `
+const card = (p, i) => `
   <li>
     <button class="card" data-id="${p.id}">
-      <span class="art">${art(p.artwork)}</span>
+      <span class="art">${art(p.artwork, i < 4)}</span>
       <span class="num">${numero(p.id)}</span>
       <span class="name" translate="no">${esc(nombre(p.name))}</span>
       <span class="types">${p.types.map(tipo).join('')}</span>
@@ -97,7 +98,7 @@ async function buscar({ append = false } = {}) {
     }
     if (id !== consulta) return
     offset += items.length
-    const html = items.map(card).join('')
+    const html = items.map((p, i) => card(p, append ? PAGINA : i)).join('')
     if (append) grid.insertAdjacentHTML('beforeend', html)
     else grid.innerHTML = html || vacio('Ningún Pokémon coincide con la búsqueda.')
     $('#count').textContent = `${total} Pokémon`
